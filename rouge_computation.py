@@ -1,9 +1,14 @@
 import json
 from rouge import Rouge
+from nltk.translate.bleu_score import sentence_bleu
+from nltk.translate.meteor_score import single_meteor_score
 import torch
 from tqdm import tqdm
 from sentence_transformers import SentenceTransformer, util
 import os
+
+import nltk
+nltk.download('wordnet')
 
 
 def score_computation(input_file, summarizer, gt_file):
@@ -21,6 +26,10 @@ def score_computation(input_file, summarizer, gt_file):
     avg_rouge_l_f = [0, 0, 0, 0, 0]
 
     avg_sbert = [0, 0, 0, 0, 0]
+
+    avg_bleu = [0, 0, 0, 0, 0]
+    avg_meteor = [0, 0, 0, 0, 0]
+
 
     with open(input_file, "r") as input_file, open(gt_file, "r") as description_file:
         data = json.load(input_file)
@@ -49,6 +58,9 @@ def score_computation(input_file, summarizer, gt_file):
                     cosine_scores = util.pytorch_cos_sim(sentence_embedding, description_embedding)
                     sbert_score = cosine_scores[0][0]
 
+                    bleu_score = sentence_bleu([gt.split()], summary.split())
+                    meteor_score = single_meteor_score(gt, summary)
+
                 except Exception as e:
                     print("ERROR: ", e)
                     rouge_1_p = 0
@@ -61,6 +73,8 @@ def score_computation(input_file, summarizer, gt_file):
                     rouge_l_r = 0
                     rouge_l_f = 0
                     sbert_score = 0
+                    bleu_score = 0
+                    meteor_score = 0
 
                 avg_rouge_1_p[j - 1] += rouge_1_p
                 avg_rouge_1_r[j - 1] += rouge_1_r
@@ -72,16 +86,18 @@ def score_computation(input_file, summarizer, gt_file):
                 avg_rouge_l_r[j - 1] += rouge_l_r
                 avg_rouge_l_f[j - 1] += rouge_l_f
                 avg_sbert[j -1] += sbert_score.item()
+                avg_bleu[j - 1] += bleu_score
+                avg_meteor[j - 1] += meteor_score
 
-        with open(os.path.join("output", summarizer + "_output.txt"), "w") as output_file:
+        with open(os.path.join("output", summarizer + ".txt"), "w") as output_file:
             for i in range(len(avg_sbert)):
                 output_file.write(str(i + 1) + "-sentences summary rouge_1 -> \tP:" + str(avg_rouge_1_p[i] / len(descriptions)) + "\tR:" + str(avg_rouge_1_r[i] / len(descriptions)) + "\tF:" + str(avg_rouge_1_f[i] / len(descriptions)) + "\n")
                 output_file.write(str(i + 1) + "-sentences summary rouge_2 -> \tP:" + str(avg_rouge_2_p[i] / len(descriptions)) + "\tR:" + str(avg_rouge_2_r[i] / len(descriptions)) + "\tF:" + str(avg_rouge_2_f[i] / len(descriptions)) + "\n")
                 output_file.write(str(i + 1) + "-sentences summary rouge_l -> \tP:" + str(avg_rouge_l_p[i] / len(descriptions)) + "\tR:" + str(avg_rouge_l_r[i] / len(descriptions)) + "\tF:" + str(avg_rouge_l_f[i] / len(descriptions)) + "\n")
-                output_file.write(str(i + 1) + "-sentences summary sbert   -> \tP:" + str(avg_sbert[i] / len(descriptions)) + "\n")
+                output_file.write(str(i + 1) + "-sentences summary sbert   -> \t" + str(avg_sbert[i] / len(descriptions)) + "\n")
+                output_file.write(str(i + 1) + "-sentences summary bleu    -> \t" + str(avg_bleu[i] / len(descriptions)) + "\n")
+                output_file.write(str(i + 1) + "-sentences summary meteor  -> \t" + str(avg_meteor[i] / len(descriptions)) + "\n")
                 output_file.write("\n")
-
-
 
 
 if torch.cuda.is_available():
@@ -92,4 +108,7 @@ else:
 textModel = SentenceTransformer('paraphrase-mpnet-base-v2', device=device)
 
 
-score_computation(os.path.join("output", "Hierarchical_MATeR_output.json"), "Hierarchical_MATeR", os.path.join("output", "gt.json"))
+score_computation(os.path.join("output", "Hierarchical_MATeR.json"), "Hierarchical_MATeR", os.path.join("output", "gt.json"))
+score_computation(os.path.join("output", "MATeR.json"), "MATeR", os.path.join("output", "gt.json"))
+score_computation(os.path.join("output", "HiBERT.json"), "HiBERT", os.path.join("output", "gt.json"))
+score_computation(os.path.join("output", "oracle_sbert.json"), "oracle_sbert", os.path.join("output", "gt.json"))
