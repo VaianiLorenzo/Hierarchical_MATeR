@@ -11,24 +11,41 @@ import nltk
 nltk.download('wordnet')
 
 
-def score_computation(input_file, summarizer, gt_file):
+def score_computation(input_file, summarizer, gt_file, max_sentences=5):
 
-    avg_rouge_1_p = [0, 0, 0, 0, 0]
-    avg_rouge_1_r = [0, 0, 0, 0, 0]
-    avg_rouge_1_f = [0, 0, 0, 0, 0]
+    # avg_rouge_1_p = [0, 0, 0, 0, 0]
+    # avg_rouge_1_r = [0, 0, 0, 0, 0]
+    # avg_rouge_1_f = [0, 0, 0, 0, 0]
     
-    avg_rouge_2_p = [0, 0, 0, 0, 0]
-    avg_rouge_2_r = [0, 0, 0, 0, 0]
-    avg_rouge_2_f = [0, 0, 0, 0, 0]
+    # avg_rouge_2_p = [0, 0, 0, 0, 0]
+    # avg_rouge_2_r = [0, 0, 0, 0, 0]
+    # avg_rouge_2_f = [0, 0, 0, 0, 0]
 
-    avg_rouge_l_p = [0, 0, 0, 0, 0]
-    avg_rouge_l_r = [0, 0, 0, 0, 0]
-    avg_rouge_l_f = [0, 0, 0, 0, 0]
+    # avg_rouge_l_p = [0, 0, 0, 0, 0]
+    # avg_rouge_l_r = [0, 0, 0, 0, 0]
+    # avg_rouge_l_f = [0, 0, 0, 0, 0]
 
-    avg_sbert = [0, 0, 0, 0, 0]
+    # avg_sbert = [0, 0, 0, 0, 0]
 
-    avg_bleu = [0, 0, 0, 0, 0]
-    avg_meteor = [0, 0, 0, 0, 0]
+    # avg_bleu = [0, 0, 0, 0, 0]
+    # avg_meteor = [0, 0, 0, 0, 0]
+
+    avg_rouge_1_p = [0]*max_sentences
+    avg_rouge_1_r = [0]*max_sentences
+    avg_rouge_1_f = [0]*max_sentences
+
+    avg_rouge_2_p = [0]*max_sentences
+    avg_rouge_2_r = [0]*max_sentences
+    avg_rouge_2_f = [0]*max_sentences
+
+    avg_rouge_l_p = [0]*max_sentences
+    avg_rouge_l_r = [0]*max_sentences
+    avg_rouge_l_f = [0]*max_sentences
+
+    avg_sbert = [0]*max_sentences
+
+    avg_bleu = [0]*max_sentences
+    avg_meteor = [0]*max_sentences
 
 
     with open(input_file, "r") as input_file, open(gt_file, "r") as description_file:
@@ -37,7 +54,7 @@ def score_computation(input_file, summarizer, gt_file):
 
         for k in tqdm(descriptions.keys()):
             gt = descriptions[k]
-            for j in range(1,6):
+            for j in range(1,max_sentences+1):
                 summary = " ".join(data[k][str(j)])
 
                 try:
@@ -52,11 +69,16 @@ def score_computation(input_file, summarizer, gt_file):
                     rouge_l_p = rouge_score[0]["rouge-l"]["p"]
                     rouge_l_r = rouge_score[0]["rouge-l"]["r"]
                     rouge_l_f = rouge_score[0]["rouge-l"]["f"]
+                    
+                    with torch.no_grad():
+                        sentence_embedding = textModel.encode(summary, convert_to_tensor=True)
+                        sentence_embedding = sentence_embedding.detach().cpu()
+                        description_embedding = textModel.encode(gt, convert_to_tensor=True)
+                        description_embedding = description_embedding.detach().cpu()
+                        cosine_scores = util.pytorch_cos_sim(sentence_embedding, description_embedding)
+                        sbert_score = cosine_scores[0][0]
 
-                    sentence_embedding = textModel.encode(summary, convert_to_tensor=True)
-                    description_embedding = textModel.encode(gt, convert_to_tensor=True)
-                    cosine_scores = util.pytorch_cos_sim(sentence_embedding, description_embedding)
-                    sbert_score = cosine_scores[0][0]
+                    #sbert_score=torch.tensor(0)
 
                     bleu_score = sentence_bleu([gt.split()], summary.split())
                     meteor_score = single_meteor_score(gt, summary)
@@ -72,7 +94,7 @@ def score_computation(input_file, summarizer, gt_file):
                     rouge_l_p = 0
                     rouge_l_r = 0
                     rouge_l_f = 0
-                    sbert_score = 0
+                    sbert_score = torch.tensor(0)
                     bleu_score = 0
                     meteor_score = 0
 
@@ -106,9 +128,15 @@ else:
     torch.device('cpu')
     device = torch.device('cpu')
 textModel = SentenceTransformer('paraphrase-mpnet-base-v2', device=device)
+textModel.eval()
 
 
-score_computation(os.path.join("output", "Hierarchical_MATeR.json"), "Hierarchical_MATeR", os.path.join("output", "gt.json"))
-score_computation(os.path.join("output", "MATeR.json"), "MATeR", os.path.join("output", "gt.json"))
-score_computation(os.path.join("output", "HiBERT.json"), "HiBERT", os.path.join("output", "gt.json"))
-score_computation(os.path.join("output", "oracle_sbert.json"), "oracle_sbert", os.path.join("output", "gt.json"))
+# score_computation(os.path.join("output", "Hierarchical_MATeR.json"), "Hierarchical_MATeR", os.path.join("output", "gt.json"))
+# score_computation(os.path.join("output", "MATeR.json"), "MATeR", os.path.join("output", "gt.json"))
+# score_computation(os.path.join("output", "HiBERT.json"), "HiBERT", os.path.join("output", "gt.json"))
+# score_computation(os.path.join("output", "oracle_sbert.json"), "oracle_sbert", os.path.join("output", "gt.json"))
+#score_computation(os.path.join("output", "abstractive-t5-base-128_1_Hierarchical_MATeR_test.json"), "t5-base-128_1_Hierarchical_MATeR", os.path.join("output", "gt.json"), max_sentences=1)
+#score_computation(os.path.join("output", "abstractive-t5-large-128_1_Hierarchical_MATeR_test.json"), "t5-large-128_1_Hierarchical_MATeR", os.path.join("output", "gt.json"), max_sentences=1)
+#score_computation(os.path.join("output", "abstractive-bart-large-cnn-128_1_Hierarchical_MATeR_test.json"), "bart-large-cnn-128_1_Hierarchical_MATeR", os.path.join("output", "gt.json"), max_sentences=1)
+score_computation(os.path.join("output", "abstractive-bart-large-cnn-128_2_Hierarchical_MATeR_test.json"), "bart-large-cnn-128_2_Hierarchical_MATeR", os.path.join("output", "gt.json"), max_sentences=1)
+
