@@ -10,6 +10,7 @@ from datasets import load_dataset
 import pandas as pd
 import json
 from typing import List
+from sentence_transformers import SentenceTransformer, util
 
 # it removes the warning for the number of threads used for data loading
 os.environ["TOKENIZERS_PARALLELISM"] = "true"
@@ -84,13 +85,13 @@ parser = argparse.ArgumentParser()
 parser.add_argument(
     "--MODEL_TAG",
     type=str,
-    default="facebook/bart-large",
+    default="facebook/bart-large-cnn",
     help="The identifier for the model to be used. It can be an identifier from the transformers library or a path to a local model.",
 )
 parser.add_argument(
     "--BATCH_SIZE",
     type=int,
-    default=3,
+    default=4,
     help="The batch size to be used for training.",
 )
 parser.add_argument(
@@ -106,9 +107,15 @@ parser.add_argument(
     help="The number of sentences to be used for training.",
 )
 parser.add_argument(
+    "--METRIC_FOR_BEST_MODEL",
+    type=str,
+    default="SBERT",
+    help="The metric to be used for saving the best model.",
+)
+parser.add_argument(
     "--CHECKPOINT_DIR",
     type=str,
-    default="checkpoints/bart-large-128_1",
+    default="checkpoints",
     help="The directory where the checkpoints will be saved.",
 )
 # parser.add_argument(
@@ -182,8 +189,10 @@ parser.add_argument(
 )
 args = parser.parse_args()
 
-if not os.path.exists(args.CHECKPOINT_DIR):
-    os.mkdir(args.CHECKPOINT_DIR)
+checkpoint_dir = os.path.join(args.CHECKPOINT_DIR, args.MODEL_TAG.split("/")[-1]+"_"+str(args.MAX_OUTPUT_LENGTH)+"_"+str(args.NUM_SENTENCES)+"_"+args.METRIC_FOR_BEST_MODEL)
+
+if not os.path.exists(checkpoint_dir):
+    os.mkdir(checkpoint_dir)
 
 # metadata = pd.read_csv("../podcast_dataset/podcasts-no-audio-13GB/metadata.tsv", sep="\t")
 # gt_dict = {}
@@ -283,7 +292,7 @@ Most of the parameters are taken from the parser arguments.
 ############################################################################################################
 """
 training_arguments = transformers.TrainingArguments(
-    output_dir=args.CHECKPOINT_DIR,
+    output_dir=checkpoint_dir,
     num_train_epochs=args.EPOCHS,
     per_device_train_batch_size=args.BATCH_SIZE,
     per_device_eval_batch_size=args.BATCH_SIZE,
@@ -299,7 +308,7 @@ training_arguments = transformers.TrainingArguments(
     save_total_limit=args.SAVE_TOTAL_LIMIT,
     no_cuda=not (args.USE_CUDA),
     fp16=args.FP16,
-    metric_for_best_model="R2",
+    metric_for_best_model=args.METRIC_FOR_BEST_MODEL,
     greater_is_better=True,
     hub_model_id=args.HUB_MODEL_ID,
     push_to_hub=args.PUSH_TO_HUB,
@@ -314,6 +323,9 @@ The function takes as input a dictionary with the predictions and the labels and
 
 
 rouge = evaluate.load("rouge")
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+textModel = SentenceTransformer('paraphrase-mpnet-base-v2', device=device)
+textModel.eval()
 
 
 def compute_metrics(pred):
@@ -331,11 +343,22 @@ def compute_metrics(pred):
         rouge_types=["rouge1", "rouge2", "rougeL", "rougeLsum"],
     )
 
+
+    with torch.no_grad():
+        sentence_embedding = textModel.encode(pred_str, convert_to_tensor=True)
+        sentence_embedding = sentence_embedding.detach().cpu()
+        description_embedding = textModel.encode(label_str, convert_to_tensor=True)
+        description_embedding = description_embedding.detach().cpu()
+        cosine_scores = util.pytorch_cos_sim(sentence_embedding, description_embedding)
+        sbert_score = cosine_scores[0][0]
+
+
     return {
         "R1": round(rouge_output["rouge1"], 4),
         "R2": round(rouge_output["rouge2"], 4),
         "RL": round(rouge_output["rougeL"], 4),
         "RLsum": round(rouge_output["rougeLsum"], 4),
+        "SBERT": round(sbert_score.item(), 4),
     }
 
 def preprocess_logits_for_metrics(logits, labels):
