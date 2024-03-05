@@ -11,6 +11,7 @@ import pandas as pd
 import json
 from typing import List
 from sentence_transformers import SentenceTransformer, util
+import gc
 
 # it removes the warning for the number of threads used for data loading
 os.environ["TOKENIZERS_PARALLELISM"] = "true"
@@ -107,10 +108,10 @@ parser.add_argument(
     help="The number of sentences to be used for training.",
 )
 parser.add_argument(
-    "--METRIC_FOR_BEST_MODEL",
+    "--EXTRACTIVE_MODEL",
     type=str,
-    default="SBERT",
-    help="The metric to be used for saving the best model.",
+    default="Hierarchical-MATeR",
+    help="The identifier for the model to be used.",
 )
 parser.add_argument(
     "--CHECKPOINT_DIR",
@@ -189,7 +190,7 @@ parser.add_argument(
 )
 args = parser.parse_args()
 
-checkpoint_dir = os.path.join(args.CHECKPOINT_DIR, args.MODEL_TAG.split("/")[-1]+"_"+str(args.MAX_OUTPUT_LENGTH)+"_"+str(args.NUM_SENTENCES)+"_"+args.METRIC_FOR_BEST_MODEL)
+checkpoint_dir = os.path.join(args.CHECKPOINT_DIR, args.MODEL_TAG.split("/")[-1]+"_"+str(args.MAX_OUTPUT_LENGTH)+"_"+str(args.NUM_SENTENCES)+"_"+args.EXTRACTIVE_MODEL)
 
 if not os.path.exists(checkpoint_dir):
     os.mkdir(checkpoint_dir)
@@ -215,13 +216,13 @@ for file in os.listdir("splits"):
                 gt_dict[podcast_id] = list(g["description"])[0]
 
 
-with open("output/Hierarchical_MATeR_train.json", "r") as input_file:
+with open(os.path.join("output", args.EXTRACTIVE_MODEL+"_train.json"), "r") as input_file:
     train_data = json.load(input_file)
 
-with open("output/Hierarchical_MATeR_val.json", "r") as input_file:
+with open(os.path.join("output", args.EXTRACTIVE_MODEL+"_val.json"), "r") as input_file:
     val_data = json.load(input_file)
 
-with open("output/Hierarchical_MATeR_test.json", "r") as input_file:
+with open(os.path.join("output", args.EXTRACTIVE_MODEL+"_test.json"), "r") as input_file:
     test_data = json.load(input_file)
 
 
@@ -291,7 +292,7 @@ Creating the training arguments that will be passed to the Trainer object.
 Most of the parameters are taken from the parser arguments.
 ############################################################################################################
 """
-training_arguments = transformers.TrainingArguments(
+training_arguments = transformers.Seq2SeqTrainingArguments(
     output_dir=checkpoint_dir,
     num_train_epochs=args.EPOCHS,
     per_device_train_batch_size=args.BATCH_SIZE,
@@ -308,10 +309,11 @@ training_arguments = transformers.TrainingArguments(
     save_total_limit=args.SAVE_TOTAL_LIMIT,
     no_cuda=not (args.USE_CUDA),
     fp16=args.FP16,
-    metric_for_best_model=args.METRIC_FOR_BEST_MODEL,
+    metric_for_best_model="R2",
     greater_is_better=True,
     hub_model_id=args.HUB_MODEL_ID,
     push_to_hub=args.PUSH_TO_HUB,
+    report_to=None,
 )
 
 """
@@ -321,12 +323,7 @@ The function takes as input a dictionary with the predictions and the labels and
 ############################################################################################################
 """
 
-
 rouge = evaluate.load("rouge")
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-textModel = SentenceTransformer('paraphrase-mpnet-base-v2', device=device)
-textModel.eval()
-
 
 def compute_metrics(pred):
 
@@ -343,22 +340,11 @@ def compute_metrics(pred):
         rouge_types=["rouge1", "rouge2", "rougeL", "rougeLsum"],
     )
 
-
-    with torch.no_grad():
-        sentence_embedding = textModel.encode(pred_str, convert_to_tensor=True)
-        sentence_embedding = sentence_embedding.detach().cpu()
-        description_embedding = textModel.encode(label_str, convert_to_tensor=True)
-        description_embedding = description_embedding.detach().cpu()
-        cosine_scores = util.pytorch_cos_sim(sentence_embedding, description_embedding)
-        sbert_score = cosine_scores[0][0]
-
-
     return {
         "R1": round(rouge_output["rouge1"], 4),
         "R2": round(rouge_output["rouge2"], 4),
         "RL": round(rouge_output["rougeL"], 4),
         "RLsum": round(rouge_output["rougeLsum"], 4),
-        "SBERT": round(sbert_score.item(), 4),
     }
 
 def preprocess_logits_for_metrics(logits, labels):
@@ -377,7 +363,7 @@ It will take care of training and validation.
 ############################################################################################################
 """
 
-trainer = transformers.Trainer(
+trainer = transformers.Seq2SeqTrainer(
     model=model,
     args=training_arguments,
     train_dataset=summarization_train_dataset,

@@ -7,6 +7,9 @@ import json
 from typing import List
 from tqdm import tqdm
 
+# import GenerationConfig from transformers
+from transformers import GenerationConfig
+
 # it removes the warning for the number of threads used for data loading
 os.environ["TOKENIZERS_PARALLELISM"] = "true"
 
@@ -54,13 +57,13 @@ parser = argparse.ArgumentParser()
 parser.add_argument(
     "--MODEL_PATH",
     type=str,
-    default="checkpoints/bart-large-128_1/checkpoint-1000",
+    default="checkpoints/bart-large-cnn-128_1_Hierarchical-MATeR/checkpoint-1000",
     help="The path of the pretrained model to be used for generate summaries.",
 )
 parser.add_argument(
     "--MODEL_TAG",
     type=str,
-    default="facebook/bart-large",
+    default="facebook/bart-large-cnn",
     help="The tag of the pretrained model to be used for generate summaries.",
 )
 parser.add_argument(
@@ -75,11 +78,21 @@ parser.add_argument(
     default=128,
     help="The maximum length of the output sequence.",
 )
-
+# parser.add_argument(
+#     "--TEMPERATURE",
+#     type=float,
+#     default=1.0,
+#     help="The temperature to be used for generate summaries.",
+# )
 args = parser.parse_args()
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-with open("output/Hierarchical_MATeR_test.json", "r") as input_file:
+# create a generation config with the specified parameters
+# generation_config = GenerationConfig(
+#     temperature=args.TEMPERATURE,
+# )
+
+with open(os.path.join("output", str(args.MODEL_PATH.split("/")[1].split("_")[-1]))+"_test.json", "r") as input_file:
     test_data = json.load(input_file)
 test_sources = []
 test_keys = []
@@ -120,7 +133,12 @@ with torch.no_grad():
             inner_dict["1"] = [decoded_output]
             output_dict[data["source_keys"][j]] = inner_dict
 
-with open("output/abstractive-"+str(args.MODEL_PATH.split("/")[1])+"_Hierarchical_MATeR_test.json", "w") as output_file:
+with open("output/abstractive-"+str(args.MODEL_PATH.split("/")[1])+"_test.json", "w") as output_file:
     json.dump(output_dict, output_file)
 
         
+
+
+#
+# python abstractive_summarization_generate.py --MODEL_PATH checkpoints/text_summarization_128_1_Hierarchical-MATeR/checkpoint-23418 --MODEL_TAG Falconsai/text_summarization
+#

@@ -36,6 +36,7 @@ class h_transformer(nn.Module):
         src = self.pos_encoder(src)
         src = src.float()
         mask = mask.transpose(1, 0)
+        mask = mask.float()
         output = self.transformer_encoder(src, src_key_padding_mask = mask)
         return output
 

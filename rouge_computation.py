@@ -16,7 +16,6 @@ def score_computation(input_file, summarizer, gt_file, max_sentences=5):
     # avg_rouge_1_p = [0, 0, 0, 0, 0]
     # avg_rouge_1_r = [0, 0, 0, 0, 0]
     # avg_rouge_1_f = [0, 0, 0, 0, 0]
-    
     # avg_rouge_2_p = [0, 0, 0, 0, 0]
     # avg_rouge_2_r = [0, 0, 0, 0, 0]
     # avg_rouge_2_f = [0, 0, 0, 0, 0]
@@ -131,21 +130,51 @@ textModel = SentenceTransformer('paraphrase-mpnet-base-v2', device=device)
 textModel.eval()
 
 
-# score_computation(os.path.join("output", "Hierarchical_MATeR.json"), "Hierarchical_MATeR", os.path.join("output", "gt.json"))
+# score_computation(os.path.join("output", "Hierarchical-MATeR.json"), "Hierarchical-MATeR", os.path.join("output", "gt.json"))
 # score_computation(os.path.join("output", "MATeR.json"), "MATeR", os.path.join("output", "gt.json"))
 # score_computation(os.path.join("output", "HiBERT.json"), "HiBERT", os.path.join("output", "gt.json"))
 # score_computation(os.path.join("output", "oracle_sbert.json"), "oracle_sbert", os.path.join("output", "gt.json"))
+#score_computation(os.path.join("output", "oracle_grounding_chunks.json"), "oracle_grounding_chunks", os.path.join("output", "gt.json"), max_sentences=1)
 
-#score_computation(os.path.join("output", "abstractive-t5-base-128_1_R2_Hierarchical_MATeR_test.json"), "t5-base-128_1_R2_Hierarchical_MATeR", os.path.join("output", "gt.json"), max_sentences=1)
-#score_computation(os.path.join("output", "abstractive-t5-large-128_1_R2_Hierarchical_MATeR_test.json"), "t5-large-128_1_R2_Hierarchical_MATeR", os.path.join("output", "gt.json"), max_sentences=1)
-#score_computation(os.path.join("output", "abstractive-bart-large-cnn-128_1_R2_Hierarchical_MATeR_test.json"), "bart-large-cnn-128_1_R2_Hierarchical_MATeR", os.path.join("output", "gt.json"), max_sentences=1)
-#score_computation(os.path.join("output", "abstractive-bart-large-cnn-128_2_R2_Hierarchical_MATeR_test.json"), "bart-large-cnn-128_2_R2_Hierarchical_MATeR", os.path.join("output", "gt.json"), max_sentences=1)
-#score_computation(os.path.join("output", "abstractive-bart-large-cnn-128_3_R2_Hierarchical_MATeR_test.json"), "bart-large-cnn-128_3_R2_Hierarchical_MATeR", os.path.join("output", "gt.json"), max_sentences=1)
-#score_computation(os.path.join("output", "abstractive-bart-large-128_1_R2_Hierarchical_MATeR_test.json"), "bart-large-128_1_R2_Hierarchical_MATeR", os.path.join("output", "gt.json"), max_sentences=1)
-#score_computation(os.path.join("output", "abstractive-bart-large-128_2_R2_Hierarchical_MATeR_test.json"), "bart-large-128_2_R2_Hierarchical_MATeR", os.path.join("output", "gt.json"), max_sentences=1)
-#score_computation(os.path.join("output", "abstractive-bart-large-128_3_R2_Hierarchical_MATeR_test.json"), "bart-large-128_3_R2_Hierarchical_MATeR", os.path.join("output", "gt.json"), max_sentences=1)
 
-score_computation(os.path.join("output", "abstractive-bart-large-128_1_SBERT_Hierarchical_MATeR_test.json"), "bart-large-128_1_SBERT_Hierarchical_MATeR", os.path.join("output", "gt.json"), max_sentences=1)
-score_computation(os.path.join("output", "abstractive-bart-large-128_2_SBERT_Hierarchical_MATeR_test.json"), "bart-large-128_2_SBERT_Hierarchical_MATeR", os.path.join("output", "gt.json"), max_sentences=1)
-score_computation(os.path.join("output", "abstractive-bart-large-128_3_SBERT_Hierarchical_MATeR_test.json"), "bart-large-128_3_SBERT_Hierarchical_MATeR", os.path.join("output", "gt.json"), max_sentences=1)
+#score_computation(os.path.join("output", "abstractive-text-summarization_128_1_Hierarchical-MATeR_test.json"), "text-summarization_128_1_Hierarchical-MATeR", os.path.join("output", "gt.json"), max_sentences=1)
+#score_computation(os.path.join("output", "abstractive-t5-base_128_1_Hierarchical-MATeR_test.json"), "t5-base_128_1_Hierarchical-MATeR", os.path.join("output", "gt.json"), max_sentences=1)
+#score_computation(os.path.join("output", "abstractive-t5-large_128_1_Hierarchical-MATeR_test.json"), "t5-large_128_1_Hierarchical-MATeR", os.path.join("output", "gt.json"), max_sentences=1)
+#score_computation(os.path.join("output", "abstractive-bart-large-cnn_128_1_Hierarchical-MATeR_test.json"), "bart-large-cnn_128_1_Hierarchical-MATeR", os.path.join("output", "gt.json"), max_sentences=1)
+#score_computation(os.path.join("output", "abstractive-bart-large-cnn_128_2_Hierarchical-MATeR_test.json"), "bart-large-cnn_128_2_Hierarchical-MATeR", os.path.join("output", "gt.json"), max_sentences=1)
+#score_computation(os.path.join("output", "abstractive-bart-large-cnn_128_3_Hierarchical-MATeR_test.json"), "bart-large-cnn_128_3_Hierarchical-MATeR", os.path.join("output", "gt.json"), max_sentences=1)
+#score_computation(os.path.join("output", "abstractive-bart-large_128_1_Hierarchical-MATeR_test.json"), "bart-large_128_1_Hierarchical-MATeR", os.path.join("output", "gt.json"), max_sentences=1)
+#score_computation(os.path.join("output", "abstractive-bart-large_128_2_Hierarchical-MATeR_test.json"), "bart-large_128_2_Hierarchical-MATeR", os.path.join("output", "gt.json"), max_sentences=1)
+#score_computation(os.path.join("output", "abstractive-bart-large_128_3_Hierarchical-MATeR_test.json"), "bart-large_128_3_Hierarchical-MATeR", os.path.join("output", "gt.json"), max_sentences=1)
 
+#score_computation(os.path.join("output", "abstractive-bart-large-cnn_128_1_MATeR_test.json"), "bart-large-cnn_128_1_MATeR", os.path.join("output", "gt.json"), max_sentences=1)
+#score_computation(os.path.join("output", "abstractive-bart-large-cnn_128_2_MATeR_test.json"), "bart-large-cnn_128_2_MATeR", os.path.join("output", "gt.json"), max_sentences=1)
+#score_computation(os.path.join("output", "abstractive-bart-large-cnn_128_3_MATeR_test.json"), "bart-large-cnn_128_3_MATeR", os.path.join("output", "gt.json"), max_sentences=1)
+
+#score_computation(os.path.join("output", "abstractive-bart-large-cnn_128_1_HiBERT_test.json"), "bart-large-cnn_128_1_HiBERT", os.path.join("output", "gt.json"), max_sentences=1)
+#score_computation(os.path.join("output", "abstractive-bart-large-cnn_128_2_HiBERT_test.json"), "bart-large-cnn_128_2_HiBERT", os.path.join("output", "gt.json"), max_sentences=1)
+#score_computation(os.path.join("output", "abstractive-bart-large-cnn_128_3_HiBERT_test.json"), "bart-large-cnn_128_3_HiBERT", os.path.join("output", "gt.json"), max_sentences=1)
+
+#score_computation(os.path.join("output", "abstractive-chatGPT_def_2_Hierarchical-MATeR_test.json"), "ChatGPT_def_2_Hierarchical-MATeR", os.path.join("output", "gt.json"), max_sentences=1)
+#score_computation(os.path.join("output", "abstractive-chatGPT_def_2_0.0_Hierarchical-MATeR_test.json"), "ChatGPT_def_2_0.0_Hierarchical-MATeR", os.path.join("output", "gt.json"), max_sentences=1)
+#score_computation(os.path.join("output", "abstractive-chatGPT_def_2_0.5_Hierarchical-MATeR_test.json"), "ChatGPT_def_2_0.5_Hierarchical-MATeR", os.path.join("output", "gt.json"), max_sentences=1)
+#score_computation(os.path.join("output", "abstractive-chatGPT_def_2_1.0_Hierarchical-MATeR_test.json"), "ChatGPT_def_2_1.0_Hierarchical-MATeR", os.path.join("output", "gt.json"), max_sentences=1)
+score_computation(os.path.join("output", "abstractive-chatGPT_50_2_0.0_Hierarchical-MATeR_test.json"), "ChatGPT_50_2_0.0_Hierarchical-MATeR", os.path.join("output", "gt.json"), max_sentences=1)
+score_computation(os.path.join("output", "abstractive-chatGPT_50_2_0.5_Hierarchical-MATeR_test.json"), "ChatGPT_50_2_0.5_Hierarchical-MATeR", os.path.join("output", "gt.json"), max_sentences=1)
+score_computation(os.path.join("output", "abstractive-chatGPT_50_2_1.0_Hierarchical-MATeR_test.json"), "ChatGPT_50_2_1.0_Hierarchical-MATeR", os.path.join("output", "gt.json"), max_sentences=1)
+score_computation(os.path.join("output", "abstractive-chatGPT_def_2_0.0_5-shot_Hierarchical-MATeR_test.json"), "ChatGPT_def_2_0.0_5-shot_Hierarchical-MATeR", os.path.join("output", "gt.json"), max_sentences=1)
+score_computation(os.path.join("output", "abstractive-chatGPT_def_2_0.5_5-shot_Hierarchical-MATeR_test.json"), "ChatGPT_def_2_0.5_5-shot_Hierarchical-MATeR", os.path.join("output", "gt.json"), max_sentences=1)
+score_computation(os.path.join("output", "abstractive-chatGPT_def_2_1.0_5-shot_Hierarchical-MATeR_test.json"), "ChatGPT_def_2_1.0_5-shot_Hierarchical-MATeR", os.path.join("output", "gt.json"), max_sentences=1)
+
+#score_computation(os.path.join("output", "Hierarchical-MATeR_test_2020.json"), "TEST2020_Hierarchical-MATeR", os.path.join("output", "test_2020_gt.json"))
+
+#score_computation(os.path.join("output", "Hierarchical-MATeR_test.json"), "Hierarchical-MATeR_with_advertisement", os.path.join("output", "gt_with_advertisement.json"))
+#score_computation(os.path.join("output", "MATeR_test.json"), "MATeR_with_advertisement", os.path.join("output", "gt_with_advertisement.json"))
+#score_computation(os.path.join("output", "HiBERT_test.json"), "HiBERT_with_advertisement", os.path.join("output", "gt_with_advertisement.json"))
+
+# score_computation(os.path.join("output", "abstractive-bart-large-cnn_128_1_Hierarchical-MATeR_TEMP-0.1_test.json"), "bart-large-cnn_128_1_Hierarchical-MATeR_TEMP-0.1", os.path.join("output", "gt.json"), max_sentences=1)
+# score_computation(os.path.join("output", "abstractive-bart-large-cnn_128_1_Hierarchical-MATeR_TEMP-0.5_test.json"), "bart-large-cnn_128_1_Hierarchical-MATeR_TEMP-0.5", os.path.join("output", "gt.json"), max_sentences=1)
+#score_computation(os.path.join("output", "abstractive-bart-large-cnn_128_1_Hierarchical-MATeR_TEMP-1.0_test.json"), "bart-large-cnn_128_1_Hierarchical-MATeR_TEMP-1.0", os.path.join("output", "gt.json"), max_sentences=1)
+# score_computation(os.path.join("output", "abstractive-bart-large-cnn_128_1_Hierarchical-MATeR_TEMP-2.0_test.json"), "bart-large-cnn_128_1_Hierarchical-MATeR_TEMP-2.0", os.path.join("output", "gt.json"), max_sentences=1)
+
+# score_computation(os.path.join("output", "abstractive-bart-large-cnn_128_1_Hierarchical-MATeR_TEMP-5.0_test.json"), "bart-large-cnn_128_1_Hierarchical-MATeR_TEMP-5.0", os.path.join("output", "gt.json"), max_sentences=1)

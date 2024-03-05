@@ -57,9 +57,10 @@ mater_model = torch.load(model_dir + "/" + model_name)
 mater_model = mater_model.to(device)
 mater_model.eval()
 
-compute_embeddings("val", mater_model)
-compute_embeddings("test", mater_model)
+#compute_embeddings("val", mater_model)
+#compute_embeddings("test", mater_model)
 #compute_embeddings("train", mater_model)
+compute_embeddings("test_2020", mater_model)
 
 ####### ADJUST
 
